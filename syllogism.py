@@ -1,9 +1,9 @@
-#################### syllogism production model ###################
+#################### ham cheese production model ###################
 
 # this is the simplest type of act-r model
 # it uses only the production system and one buffer
 # the buffer represents the focus of thought
-# we call it the focus buffer but it is often called the goal buffer
+# we call it the focus buffer but it is often called the task buffer
 # productions fire if they match the focus buffer
 # each production changes the contents of focus buffer so a different production will fire on the next cycle
 
@@ -13,36 +13,36 @@ log=ccm.log()
 
 from ccm.lib.actr import *  
 
-#####
-# Python ACT-R requires an environment
-# but in this case we will not be using anything in the environment
-# so we 'pass' on putting things in there
-
 class MyEnvironment(ccm.Model):
     pass
 
-#####
-# create an act-r agent
+
+
 
 class MyAgent(ACTR):
-    
+
     focus=Buffer()
-    DMbuffer=Buffer() # create a buffer for the declarative memory (henceforth DM)
-
-    DM=Memory(DMbuffer)  # create DM and connect it to its buffer 
-
-    focus.set('goal:syllogism step:conclusion')
+    DMbuffer=Buffer() 
+    DM=Memory(DMbuffer,threshold=-15)            
+   
+    focus.set('task:syllogism subject:socrates isa:man')
     
-    DM.add('premise:one subject:socrates isa:man')
-    DM.add('premise:two subject:man isa:mortal')
+    DM.add('subject:socrates isa:man')
+    DM.add('subject:man isa:mortal')
+            
+    def DM_request(focus='task:syllogism subject:?subject isa:?isa'):
+        print('the start of the syllogism is...')
+        print('{} isa {}'.format(subject,isa))
+        DMbuffer.set('state:empty')
+        DM.request('subject:?isa')
+        focus.set('task:syllogism subject_1:?subject') 
 
-    def conclusion(focus='goal:syllogism step:conclusion'):
-        DM.add('conclusion:one subject:socrates isa:mortal')
-        DM.request('conclusion:one subject:?subject isa:isa?')
-        focus.set('goal:syllogism step:declare_conclusion')
+    def DM_retrieve(focus='task:syllogism subject_1:?subject_1',DMbuffer='subject:?subject_2 isa:?isa'): 
+        print('{} isa {} and {} are {} so {} isa {}'.format(subject_1,subject_2,subject_2,isa,subject_1,isa))
+        DMbuffer.set('state:empty')
+        focus.set('task:stop')
 
-    def declare_conclusion(focus='goal:syllogism step:declare_conclusion'):
-        print(subject, isa)
+
 
 tim=MyAgent()                              # name the agent
 subway=MyEnvironment()                     # name the environment
